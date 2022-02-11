@@ -1,0 +1,24 @@
+# permissions for end users to edit pullrequests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pullrequest-editor-role
+rules:
+- apiGroups:
+  - pipeline.jquad.rocks
+  resources:
+  - pullrequests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - pipeline.jquad.rocks
+  resources:
+  - pullrequests/status
+  verbs:
+  - get

@@ -1,0 +1,16 @@
+domain: jquad.rocks
+layout:
+- go.kubebuilder.io/v3
+projectName: pullrequest-operator
+repo: github.com/jquad-group/pullrequest-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: jquad.rocks
+  group: pipeline
+  kind: PullRequest
+  path: github.com/jquad-group/pullrequest-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
