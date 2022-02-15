@@ -177,18 +177,21 @@ spec:
               sourceBranches:
                 description: The branches from which a pull requst was opened to the
                   target branch
-                items:
-                  properties:
-                    commit:
-                      type: string
-                    name:
-                      type: string
-                    sha:
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
+                properties:
+                  branches:
+                    items:
+                      properties:
+                        commit:
+                          type: string
+                        name:
+                          type: string
+                        sha:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                type: object
             type: object
         type: object
     served: true

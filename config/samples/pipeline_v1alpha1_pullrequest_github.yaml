@@ -4,7 +4,7 @@
 # https://github.com/gfleury/go-bitbucket-v1
 apiVersion: v1
 data:
-  accessToken: Z2hwX1hqbmtoYTZTMGNoa0p5dnRZZHlJRE5yNDNpODRIMTNQM0VOeA==
+  accessToken: xxx
 kind: Secret
 metadata:
   name: github-secret
@@ -23,6 +23,6 @@ spec:
       owner: rannox
       repository: microservice
   targetBranch: 
-    name: main
+    name: refs/heads/main
   interval: 10m
   # TODO(user): Add fields here

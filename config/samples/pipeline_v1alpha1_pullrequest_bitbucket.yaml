@@ -27,5 +27,5 @@ spec:
       repository: microservice
   targetBranch: 
     name: refs/heads/main
-  interval: 10m
+  interval: 1m
   # TODO(user): Add fields here

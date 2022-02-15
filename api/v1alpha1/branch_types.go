@@ -6,7 +6,7 @@ type Branch struct {
 	Commit string `json:"commit,omitempty"`
 }
 
-func (currentBranch *Branch) equals(newBranch Branch) bool {
+func (currentBranch *Branch) Equals(newBranch Branch) bool {
 	if currentBranch.Name == newBranch.Name && currentBranch.SHA == newBranch.SHA && currentBranch.Commit == newBranch.Commit {
 		return true
 	} else {

@@ -51,7 +51,7 @@ type PullRequestSpec struct {
 type PullRequestStatus struct {
 
 	// The branches from which a pull requst was opened to the target branch
-	SourceBranches []Branch `json:"sourceBranches,omitempty"`
+	SourceBranches Branches `json:"sourceBranches,omitempty"`
 
 	// +patchMergeKey=type
 	// +patchStrategy=merge
@@ -85,7 +85,7 @@ func init() {
 	SchemeBuilder.Register(&PullRequest{}, &PullRequestList{})
 }
 
-func (pullRequest *PullRequest) GetBitbucketPullRequests(username string, password string) {
+func (pullRequest *PullRequest) GetBitbucketPullRequests(username string, password string) (Branches, error) {
 	basicAuth := bitbucketClient.BasicAuth{UserName: username, Password: password}
 	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
 	ctx = context.WithValue(ctx, bitbucketClient.ContextBasicAuth, basicAuth)
@@ -102,15 +102,19 @@ func (pullRequest *PullRequest) GetBitbucketPullRequests(username string, passwo
 		"at":        pullRequest.Spec.TargetBranch.Name,
 	}
 
+	var branches Branches
+
 	response, err := client.DefaultApi.GetPullRequestsPage(pullRequest.Spec.GitProvider.Bitbucket.Project, pullRequest.Spec.GitProvider.Bitbucket.Repository, opts)
 	//response, err := client.DefaultApi.GetSSHKeys(username)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
+		return branches, err
 	}
 
 	prList, err := bitbucketClient.GetPullRequestsResponse(response)
 	if err != nil {
 		fmt.Println(err)
+		return branches, err
 	}
 
 	sourceBranches := make([]Branch, len(prList))
@@ -121,11 +125,13 @@ func (pullRequest *PullRequest) GetBitbucketPullRequests(username string, passwo
 		sourceBranches[i] = tempBranch
 	}
 
-	pullRequest.Status.SourceBranches = sourceBranches
+	branches.Branches = sourceBranches
+
+	return branches, nil
 
 }
 
-func (pullRequest *PullRequest) GetGithubPullRequests(accessToken string) {
+func (pullRequest *PullRequest) GetGithubPullRequests(accessToken string) (Branches, error) {
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: accessToken},
@@ -136,24 +142,28 @@ func (pullRequest *PullRequest) GetGithubPullRequests(accessToken string) {
 
 	opts := githubClient.PullRequestListOptions{Base: pullRequest.Spec.TargetBranch.Name}
 
+	var branches Branches
+
 	var prList []*githubClient.PullRequest
 	var prResponse *githubClient.Response
 	prList, prResponse, err := client.PullRequests.List(ctx, pullRequest.Spec.GitProvider.Github.Owner, pullRequest.Spec.GitProvider.Github.Repository, &opts)
 	if err != nil {
 		fmt.Println(prResponse)
 		fmt.Println(err)
+		return branches, err
 	}
 
 	sourceBranches := make([]Branch, len(prList))
 	for i := 0; i < len(prList); i++ {
 		var tempBranch Branch
 		tempBranch.Name = prList[i].GetHead().GetRef()
-		tempBranch.SHA = prList[i].GetHead().GetSHA()
+		tempBranch.Commit = prList[i].GetHead().GetSHA()
 		sourceBranches[i] = tempBranch
 	}
 
-	pullRequest.Status.SourceBranches = sourceBranches
+	branches.SetBranches(sourceBranches)
 
+	return branches, nil
 }
 
 //GetLastCondition retruns the last condition based on the condition timestamp. if no condition is present it return false.
