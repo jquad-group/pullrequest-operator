@@ -17,17 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"context"
-	"crypto/tls"
-	"fmt"
-	"net/http"
 	"sort"
-	"time"
 
-	"golang.org/x/oauth2"
-
-	bitbucketClient "github.com/gfleury/go-bitbucket-v1"
-	githubClient "github.com/google/go-github/v42/github"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -49,7 +40,6 @@ type PullRequestSpec struct {
 
 // PullRequestStatus defines the observed state of PullRequest
 type PullRequestStatus struct {
-
 	// The branches from which a pull requst was opened to the target branch
 	SourceBranches Branches `json:"sourceBranches,omitempty"`
 
@@ -59,6 +49,8 @@ type PullRequestStatus struct {
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -83,87 +75,6 @@ type PullRequestList struct {
 
 func init() {
 	SchemeBuilder.Register(&PullRequest{}, &PullRequestList{})
-}
-
-func (pullRequest *PullRequest) GetBitbucketPullRequests(username string, password string) (Branches, error) {
-	basicAuth := bitbucketClient.BasicAuth{UserName: username, Password: password}
-	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
-	ctx = context.WithValue(ctx, bitbucketClient.ContextBasicAuth, basicAuth)
-	defer cancel()
-	// TODO: remove for prod
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	client := bitbucketClient.NewAPIClient(
-		ctx,
-		bitbucketClient.NewConfiguration(pullRequest.Spec.GitProvider.Bitbucket.RestEndpoint),
-	)
-	//username := "admin"
-	opts := map[string]interface{}{
-		"direction": "INCOMING",
-		"at":        pullRequest.Spec.TargetBranch.Name,
-	}
-
-	var branches Branches
-
-	response, err := client.DefaultApi.GetPullRequestsPage(pullRequest.Spec.GitProvider.Bitbucket.Project, pullRequest.Spec.GitProvider.Bitbucket.Repository, opts)
-	//response, err := client.DefaultApi.GetSSHKeys(username)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		return branches, err
-	}
-
-	prList, err := bitbucketClient.GetPullRequestsResponse(response)
-	if err != nil {
-		fmt.Println(err)
-		return branches, err
-	}
-
-	sourceBranches := make([]Branch, len(prList))
-	for i := 0; i < len(prList); i++ {
-		var tempBranch Branch
-		tempBranch.Name = prList[i].FromRef.DisplayID
-		tempBranch.Commit = prList[i].FromRef.LatestCommit
-		sourceBranches[i] = tempBranch
-	}
-
-	branches.Branches = sourceBranches
-
-	return branches, nil
-
-}
-
-func (pullRequest *PullRequest) GetGithubPullRequests(accessToken string) (Branches, error) {
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: accessToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	client := githubClient.NewClient(tc)
-
-	opts := githubClient.PullRequestListOptions{Base: pullRequest.Spec.TargetBranch.Name}
-
-	var branches Branches
-
-	var prList []*githubClient.PullRequest
-	var prResponse *githubClient.Response
-	prList, prResponse, err := client.PullRequests.List(ctx, pullRequest.Spec.GitProvider.Github.Owner, pullRequest.Spec.GitProvider.Github.Repository, &opts)
-	if err != nil {
-		fmt.Println(prResponse)
-		fmt.Println(err)
-		return branches, err
-	}
-
-	sourceBranches := make([]Branch, len(prList))
-	for i := 0; i < len(prList); i++ {
-		var tempBranch Branch
-		tempBranch.Name = prList[i].GetHead().GetRef()
-		tempBranch.Commit = prList[i].GetHead().GetSHA()
-		sourceBranches[i] = tempBranch
-	}
-
-	branches.SetBranches(sourceBranches)
-
-	return branches, nil
 }
 
 //GetLastCondition retruns the last condition based on the condition timestamp. if no condition is present it return false.

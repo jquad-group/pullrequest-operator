@@ -11,21 +11,3 @@ type Bitbucket struct {
 	// +kubebuilder:validation:Required
 	Repository string `json:"repository"`
 }
-
-/*
-func Create(restEndpoint string, project string, repository string) *Bitbucket {
-	return &Bitbucket{
-		RestEndpoint: restEndpoint,
-		Project:      project,
-		Repository:   repository,
-	}
-}
-
-func New() *Bitbucket {
-	return &Bitbucket{
-		RestEndpoint: "restEndpoint",
-		Project:      "project",
-		Repository:   "repository",
-	}
-}
-*/

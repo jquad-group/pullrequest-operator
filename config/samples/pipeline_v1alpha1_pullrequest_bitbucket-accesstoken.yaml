@@ -4,10 +4,7 @@
 # https://github.com/gfleury/go-bitbucket-v1
 apiVersion: v1
 data:
-  # admin
-  password: YWRtaW4= 
-  # admin
-  username: YWRtaW4=
+  accessToken: xxx
 kind: Secret
 metadata:
   name: bitbucket-secret

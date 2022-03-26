@@ -32,6 +32,10 @@ spec:
         args:
         - --leader-elect
         image: harbor.jquad.rocks/library/pullrequest-operator:latest
+        ports:
+        - containerPort: 40000
+          name: debug
+          protocol: TCP
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

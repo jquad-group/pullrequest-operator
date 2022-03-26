@@ -87,6 +87,8 @@ spec:
                 properties:
                   commit:
                     type: string
+                  details:
+                    type: string
                   name:
                     type: string
                   sha:
@@ -182,6 +184,8 @@ spec:
                     items:
                       properties:
                         commit:
+                          type: string
+                        details:
                           type: string
                         name:
                           type: string

@@ -33,6 +33,7 @@ import (
 
 	"github.com/go-logr/logr"
 	pipelinev1alpha1 "github.com/jquad-group/pullrequest-operator/api/v1alpha1"
+	gitApi "github.com/jquad-group/pullrequest-operator/pkg/git"
 )
 
 const (
@@ -46,12 +47,8 @@ const (
 	ReconcileSuccess       = "Success"
 	ReconcileSuccessReason = "Succeded"
 
-	// Bitbucket Secret keys
-	BITBUCKET_SECRET_USERNAME_KEY = "username"
-	BITBUCKET_SECRET_PASSWORD_KEY = "password"
-
-	// Github Secret keys
-	GITHUB_SECRET_ACCESSTOKEN_KEY = "accessToken"
+	// Bitbucket and Github Secret Key
+	SECRET_ACCESSTOKEN_KEY = "accessToken"
 )
 
 // PullRequestReconciler reconciles a PullRequest object
@@ -96,34 +93,19 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return r.ManageError(ctx, &pullrequest, req, err)
 	}
 
-	if pullrequest.Spec.GitProvider.Provider == BITBUCKET_PROVIDER_NAME {
-		newBranches, err := pullrequest.GetBitbucketPullRequests(string(foundSecret.Data[BITBUCKET_SECRET_USERNAME_KEY]), string(foundSecret.Data[BITBUCKET_SECRET_PASSWORD_KEY]))
-		if err != nil {
-			r.recorder.Event(&pullrequest, v1.EventTypeWarning, "Error", err.Error())
-			return r.ManageError(ctx, &pullrequest, req, err)
-		}
-		if !pullrequest.Status.SourceBranches.Equals(newBranches) {
-			setDifferences := pullrequest.Status.SourceBranches.BranchSetDifference(newBranches)
-			for i := 0; i < len(setDifferences); i++ {
-				r.recorder.Event(&pullrequest, v1.EventTypeNormal, "Info", "New PR "+setDifferences[i].Name+"/"+setDifferences[i].Commit+" received.")
-			}
-			return r.SourceBranchIsUpdatedStatus(ctx, &pullrequest, req, newBranches, "Source branches reconciliation is successful.")
-		}
-	}
+	prPoller := createGitPoller(&pullrequest)
+	newBranches, err := prPoller.Poll(string(foundSecret.Data[SECRET_ACCESSTOKEN_KEY]), pullrequest)
 
-	if pullrequest.Spec.GitProvider.Provider == GITHUB_PROVIDER_NAME {
-		newBranches, err := pullrequest.GetGithubPullRequests(string(foundSecret.Data[GITHUB_SECRET_ACCESSTOKEN_KEY]))
-		if err != nil {
-			r.recorder.Event(&pullrequest, v1.EventTypeWarning, "Error", err.Error())
-			return r.ManageError(ctx, &pullrequest, req, err)
+	if err != nil {
+		r.recorder.Event(&pullrequest, v1.EventTypeWarning, "Error", err.Error())
+		return r.ManageError(ctx, &pullrequest, req, err)
+	}
+	if !pullrequest.Status.SourceBranches.Equals(newBranches) {
+		setDifferences := pullrequest.Status.SourceBranches.BranchSetDifference(newBranches)
+		for i := 0; i < len(setDifferences); i++ {
+			r.recorder.Event(&pullrequest, v1.EventTypeNormal, "Info", "New PR "+setDifferences[i].Name+"/"+setDifferences[i].Commit+" received.")
 		}
-		if !pullrequest.Status.SourceBranches.Equals(newBranches) {
-			setDifferences := pullrequest.Status.SourceBranches.BranchSetDifference(newBranches)
-			for i := 0; i < len(setDifferences); i++ {
-				r.recorder.Event(&pullrequest, v1.EventTypeNormal, "Info", "New PR "+setDifferences[i].Name+"/"+setDifferences[i].Commit+" received.")
-			}
-			return r.SourceBranchIsUpdatedStatus(ctx, &pullrequest, req, newBranches, "Source branches reconciliation is successful.")
-		}
+		return r.SourceBranchIsUpdatedStatus(ctx, &pullrequest, req, newBranches, "Source branches reconciliation is successful.")
 	}
 
 	return ctrl.Result{RequeueAfter: pullrequest.Spec.Interval.Duration}, nil
@@ -187,40 +169,19 @@ func (r *PullRequestReconciler) SourceBranchIsUpdatedStatus(context context.Cont
 	return reconcile.Result{RequeueAfter: obj.Spec.Interval.Duration}, nil
 }
 
-func (r *PullRequestReconciler) SourceBranchIsNotUpdatedStatus(context context.Context, obj *pipelinev1alpha1.PullRequest, req ctrl.Request, message string) (reconcile.Result, error) {
-	log := log.FromContext(context)
-	if err := r.Get(context, types.NamespacedName{Name: obj.Name, Namespace: obj.Namespace}, obj); err != nil {
-		log.Error(err, "unable to get obj")
-		return reconcile.Result{}, err
+func Validate(pullrequest *pipelinev1alpha1.PullRequest, secret v1.Secret) error {
+	if len(secret.Data[SECRET_ACCESSTOKEN_KEY]) <= 0 {
+		return fmt.Errorf("invalid HTTP auth option: 'accessToken' must be set")
 	}
-
-	condition := metav1.Condition{
-		Type:               ReconcileSuccess,
-		ObservedGeneration: obj.GetGeneration(),
-		Reason:             ReconcileSuccessReason,
-		Status:             metav1.ConditionTrue,
-		Message:            message,
-	}
-	obj.AddOrReplaceCondition(condition)
-	err := r.Status().Update(context, obj)
-	if err != nil {
-		log.Error(err, "unable to update status")
-		return reconcile.Result{}, err
-	}
-	return reconcile.Result{RequeueAfter: obj.Spec.Interval.Duration}, nil
+	return nil
 }
 
-func Validate(pullrequest *pipelinev1alpha1.PullRequest, secret v1.Secret) error {
-	switch pullrequest.Spec.GitProvider.Provider {
-	case BITBUCKET_PROVIDER_NAME:
-		if len(secret.Data[BITBUCKET_SECRET_USERNAME_KEY]) <= 0 && len(secret.Data[BITBUCKET_SECRET_USERNAME_KEY]) <= 0 {
-			return fmt.Errorf("invalid HTTP auth option: 'password' requires 'username' to be set")
-		}
+func createGitPoller(repo *pipelinev1alpha1.PullRequest) gitApi.PullrequestPoller {
+	switch repo.Spec.GitProvider.Provider {
 	case GITHUB_PROVIDER_NAME:
-		if len(secret.Data[GITHUB_SECRET_ACCESSTOKEN_KEY]) <= 0 {
-			return fmt.Errorf("invalid HTTP auth option: 'accessToken' must be set")
-		}
-
+		return gitApi.NewGithubPoller()
+	case BITBUCKET_PROVIDER_NAME:
+		return gitApi.NewBitbucketPoller()
 	}
 	return nil
 }

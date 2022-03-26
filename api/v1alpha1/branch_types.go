@@ -1,9 +1,10 @@
 package v1alpha1
 
 type Branch struct {
-	Name   string `json:"name"`
-	SHA    string `json:"sha,omitempty"`
-	Commit string `json:"commit,omitempty"`
+	Name    string `json:"name"`
+	SHA     string `json:"sha,omitempty"`
+	Commit  string `json:"commit,omitempty"`
+	Details string `json:"details,omitempty"`
 }
 
 func (currentBranch *Branch) Equals(newBranch Branch) bool {
