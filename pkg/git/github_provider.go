@@ -52,7 +52,7 @@ func (githubPoller GithubPoller) Poll(accessToken string, pullRequest pullreques
 		tempBranch.Details = string(pr)
 		sourceBranches[i] = tempBranch
 	}
-	branches.SetBranches(sourceBranches)
+	branches.Branches = sourceBranches
 
 	return branches, nil
 }
