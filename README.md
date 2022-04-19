@@ -8,6 +8,8 @@ The Pull Request operator checks a target branch in a repository for new pull re
 
 ## Bitbucket
 
+For the bitbucket provider a rest endpoint url must be specified, a project and the repository where the code resides. Currently only Bitbucket Server is supported.
+
 ```
 apiVersion: pipeline.jquad.rocks/v1alpha1
 kind: PullRequest
@@ -27,6 +29,8 @@ spec:
 ```
 
 ## Github
+
+For the github provider one must specifiy the url to the repository, the owner and the repository name. 
 
 ```
 apiVersion: pipeline.jquad.rocks/v1alpha1
@@ -74,4 +78,24 @@ kind: Secret
 metadata:
   name: github-secret
 type: Opaque
+```
+
+# Status Example
+
+The following status is created after a successfull pull for the pull requests:
+
+```
+Status:
+  Conditions:
+    Last Transition Time:  2022-04-14T17:38:29Z
+    Message:               Source branches reconciliation is successful.
+    Observed Generation:   1
+    Reason:                Succeded
+    Status:                True
+    Type:                  Success
+  Source Branches:
+    Branches:
+      Commit:   e75d9b5beaf8dc12ac19ec0f72d254ad32edcc19
+      Details:  {} # JSON representation of the response from Bitbucket or Github
+      Name:     feature-kaniko
 ```
