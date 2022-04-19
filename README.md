@@ -4,6 +4,16 @@ The Pull Request operator checks a target branch in a repository for new pull re
 
 ![Workflow](https://github.com/jquad-group/pullrequest-operator/blob/main/img/pullrequest-operator.svg)
 
+# Installation 
+
+Run the following command:
+
+`kubectl apply -f https://github.com/jquad-group/pullrequest-operator/releases/latest/download/release.yaml` 
+
+The operator is installed in the pullrequest-operator-system namespace.
+
+After the installation of the operator, the PullRequest resource is added to the kubernetes cluster.
+
 # Specification 
 
 ## Bitbucket
