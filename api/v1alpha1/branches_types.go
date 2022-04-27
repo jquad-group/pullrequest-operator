@@ -19,6 +19,10 @@ func (branches *Branches) Equals(newBranches Branches) bool {
 		return false
 	}
 
+	if branches.GetSize() != newBranches.GetSize() {
+		return false
+	}
+
 	for i, branch := range branches.Branches {
 		if !newBranches.Branches[i].Equals(branch) {
 			found = false
