@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-  accessToken: xxx
+  accessToken: xxx==
 kind: Secret
 metadata:
   name: bitbucket-secret
@@ -13,6 +13,7 @@ metadata:
 spec:
   gitProvider:
     provider: Bitbucket
+    insecureSkipVerify: true
     secretRef: bitbucket-secret
     bitbucket:
       restEndpoint: https://bitbucket.jquad.rocks/rest

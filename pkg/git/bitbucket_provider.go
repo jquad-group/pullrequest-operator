@@ -15,20 +15,34 @@ import (
 )
 
 type BitbucketPoller struct {
+	Endpoint           string
+	AccessToken        string
+	InsecureSkipVerify bool
+	Project            string
+	Repository         string
 }
 
-func NewBitbucketPoller() *BitbucketPoller {
-	return &BitbucketPoller{}
+func NewBitbucketPoller(endpoint string, accessToken string, insecureSkipVerify bool, project string, repository string) *BitbucketPoller {
+	return &BitbucketPoller{
+		Endpoint:           endpoint,
+		AccessToken:        accessToken,
+		InsecureSkipVerify: insecureSkipVerify,
+		Project:            project,
+		Repository:         repository,
+	}
 }
 
-func (bitbucketPoller BitbucketPoller) Poll(accessToken string, pullRequest pullrequestv1alpha1.PullRequest) (pullrequestv1alpha1.Branches, error) {
-	accessToken = strings.TrimSuffix(accessToken, "\n")
+func (bitbucketPoller BitbucketPoller) Poll(branch string) (pullrequestv1alpha1.Branches, error) {
+	accessToken := strings.TrimSuffix(bitbucketPoller.AccessToken, "\n")
 	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
-	ctx = context.WithValue(ctx, bitbucketClient.ContextAccessToken, accessToken)
+	if len(bitbucketPoller.AccessToken) > 0 {
+		ctx = context.WithValue(ctx, bitbucketClient.ContextAccessToken, accessToken)
+	}
 	defer cancel()
-	// TODO: remove for prod
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	bitbucketConfig := bitbucketClient.NewConfiguration(pullRequest.Spec.GitProvider.Bitbucket.RestEndpoint)
+	if bitbucketPoller.InsecureSkipVerify {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	bitbucketConfig := bitbucketClient.NewConfiguration(bitbucketPoller.Endpoint)
 	client := bitbucketClient.NewAPIClient(
 		ctx,
 		bitbucketConfig,
@@ -36,22 +50,22 @@ func (bitbucketPoller BitbucketPoller) Poll(accessToken string, pullRequest pull
 
 	opts := map[string]interface{}{
 		"direction": "INCOMING",
-		"at":        pullRequest.Spec.TargetBranch.Name,
+		"at":        branch,
 	}
 
 	var branches pullrequestv1alpha1.Branches
 
-	response, err := client.DefaultApi.GetPullRequestsPage(pullRequest.Spec.GitProvider.Bitbucket.Project, pullRequest.Spec.GitProvider.Bitbucket.Repository, opts)
+	response, err := client.DefaultApi.GetPullRequestsPage(bitbucketPoller.Project, bitbucketPoller.Repository, opts)
 	fmt.Println(response)
 	//response, err := client.DefaultApi.GetSSHKeys(username)
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		//fmt.Printf("%s\n", err.Error())
 		return branches, err
 	}
 
 	prList, err := bitbucketClient.GetPullRequestsResponse(response)
 	if err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		return branches, err
 	}
 
@@ -62,8 +76,8 @@ func (bitbucketPoller BitbucketPoller) Poll(accessToken string, pullRequest pull
 		tempBranch.Commit = prList[i].FromRef.LatestCommit
 		pr, err := json.Marshal(prList[i])
 		if err != nil {
-			fmt.Println(err)
-			return branches, nil
+			//fmt.Println(err)
+			return branches, err
 		}
 		tempBranch.Details = string(pr)
 		sourceBranches[i] = tempBranch

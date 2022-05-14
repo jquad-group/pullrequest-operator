@@ -66,6 +66,9 @@ spec:
                     - repository
                     - url
                     type: object
+                  insecureSkipVerify:
+                    description: Accept not trusted certificatse
+                    type: boolean
                   provider:
                     description: Git Provider type
                     enum:
@@ -76,6 +79,7 @@ spec:
                     description: Git Provider credentials
                     type: string
                 required:
+                - insecureSkipVerify
                 - provider
                 type: object
               interval:

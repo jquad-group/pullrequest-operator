@@ -12,6 +12,10 @@ type GitProvider struct {
 	// +kubebuilder:validation:Required
 	Provider string `json:"provider"`
 
+	// Accept not trusted certificatse
+	// +kubebuilder:validation:Required
+	InsecureSkipVerify bool `json:"insecureSkipVerify"`
+
 	// Git Provider credentials
 	// +kubebuilder:validation:Optional
 	SecretRef string `json:"secretRef"`
