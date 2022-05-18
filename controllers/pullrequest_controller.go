@@ -123,6 +123,15 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		for i := 0; i < len(setDifferences); i++ {
 			r.recorder.Event(&pullrequest, v1.EventTypeNormal, "Info", "New PR "+setDifferences[i].Name+"/"+setDifferences[i].Commit+" received.")
 		}
+		condition := metav1.Condition{
+			Type:               ReconcileSuccess,
+			LastTransitionTime: metav1.Now(),
+			ObservedGeneration: pullrequest.GetGeneration(),
+			Reason:             ReconcileSuccessReason,
+			Status:             metav1.ConditionTrue,
+			Message:            "Success",
+		}
+		pullrequest.AddOrReplaceCondition(condition)
 		pullrequest.Status.SourceBranches.Branches = setDifferences
 		patch.UnstructuredContent()["status"] = pullrequest.Status
 		r.Status().Patch(ctx, patch, client.Apply, patchOptions)
