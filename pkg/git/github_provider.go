@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	githubClient "github.com/google/go-github/v42/github"
 	pullrequestv1alpha1 "github.com/jquad-group/pullrequest-operator/api/v1alpha1"
@@ -63,7 +64,7 @@ func (githubPoller GithubPoller) Poll(branch string) (pullrequestv1alpha1.Branch
 	var client *githubClient.Client
 	var errClient error
 	// check if the base url is github.com or an enterprise github server
-	if githubPoller.Endpoint != "https://github.com/" {
+	if !strings.HasPrefix(githubPoller.Endpoint, "https://github.com/") {
 		client, errClient = githubClient.NewEnterpriseClient(githubPoller.Endpoint, githubPoller.Endpoint, tc)
 		if errClient != nil {
 			fmt.Println(errClient)
