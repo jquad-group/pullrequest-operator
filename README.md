@@ -1,6 +1,6 @@
 # Pull Request Operator 
 
-The Pull Request operator checks a target branch in a repository for new pull requests at a specified interval. 
+The Pull Request operator checks a target branch in a repository for new pull requests at a specified interval. tewtwetwe
 
 ![Workflow](https://github.com/jquad-group/pullrequest-operator/blob/main/img/pullrequest-operator.svg)
 
