@@ -171,7 +171,7 @@ func (r *PullRequestReconciler) ManageError(context context.Context, obj *pipeli
 		log.Error(err, "unable to update status")
 		return reconcile.Result{}, err
 	}
-	return reconcile.Result{}, nil
+	return reconcile.Result{Requeue: true}, nil
 }
 
 func Validate(pullrequest *pipelinev1alpha1.PullRequest, secret v1.Secret) error {
