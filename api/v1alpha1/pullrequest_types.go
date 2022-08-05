@@ -43,6 +43,8 @@ type PullRequestStatus struct {
 	// The branches from which a pull requst was opened to the target branch
 	SourceBranches Branches `json:"sourceBranches,omitempty"`
 
+	ETag string `json:"etag,omitempty"`
+
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map

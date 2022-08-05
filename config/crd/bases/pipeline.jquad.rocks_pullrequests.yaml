@@ -180,6 +180,8 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              etag:
+                type: string
               sourceBranches:
                 description: The branches from which a pull requst was opened to the
                   target branch
