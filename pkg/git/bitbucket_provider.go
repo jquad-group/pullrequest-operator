@@ -32,7 +32,7 @@ func NewBitbucketPoller(endpoint string, accessToken string, insecureSkipVerify 
 	}
 }
 
-func (bitbucketPoller BitbucketPoller) Poll(branch string) (pullrequestv1alpha1.Branches, error) {
+func (bitbucketPoller BitbucketPoller) Poll(branch string, etag string) (pullrequestv1alpha1.Branches, string, error) {
 	accessToken := strings.TrimSuffix(bitbucketPoller.AccessToken, "\n")
 	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
 	if len(bitbucketPoller.AccessToken) > 0 {
@@ -60,13 +60,13 @@ func (bitbucketPoller BitbucketPoller) Poll(branch string) (pullrequestv1alpha1.
 	//response, err := client.DefaultApi.GetSSHKeys(username)
 	if err != nil {
 		//fmt.Printf("%s\n", err.Error())
-		return branches, err
+		return branches, "", err
 	}
 
 	prList, err := bitbucketClient.GetPullRequestsResponse(response)
 	if err != nil {
 		//fmt.Println(err)
-		return branches, err
+		return branches, "", err
 	}
 
 	sourceBranches := make([]pullrequestv1alpha1.Branch, len(prList))
@@ -77,7 +77,7 @@ func (bitbucketPoller BitbucketPoller) Poll(branch string) (pullrequestv1alpha1.
 		pr, err := json.Marshal(prList[i])
 		if err != nil {
 			//fmt.Println(err)
-			return branches, err
+			return branches, "", err
 		}
 		tempBranch.Details = string(pr)
 		sourceBranches[i] = tempBranch
@@ -85,6 +85,6 @@ func (bitbucketPoller BitbucketPoller) Poll(branch string) (pullrequestv1alpha1.
 
 	branches.Branches = sourceBranches
 
-	return branches, nil
+	return branches, "", nil
 
 }

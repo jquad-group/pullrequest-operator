@@ -5,5 +5,5 @@ import (
 )
 
 type PullrequestPoller interface {
-	Poll(branch string) (pullrequestv1alpha1.Branches, error)
+	Poll(branch string, etag string) (pullrequestv1alpha1.Branches, string, error)
 }

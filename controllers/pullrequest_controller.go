@@ -112,7 +112,11 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		prPoller = createGitPoller(&pullrequest, "")
 	}
 
-	newBranches, err := prPoller.Poll(pullrequest.Spec.TargetBranch.Name)
+	newBranches, eTag, err := prPoller.Poll(pullrequest.Spec.TargetBranch.Name, pullrequest.Status.ETag)
+	if (eTag == pullrequest.Status.ETag) && (eTag != "") {
+		// Request returned 304 Not Modified, return and requeue at the specified interval
+		return ctrl.Result{RequeueAfter: pullrequest.Spec.Interval.Duration}, nil
+	}
 	if err != nil {
 		r.recorder.Event(&pullrequest, v1.EventTypeWarning, "Error", err.Error())
 		return r.ManageError(ctx, &pullrequest, req, err)
@@ -132,6 +136,7 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			Message:            "Success",
 		}
 		pullrequest.AddOrReplaceCondition(condition)
+		pullrequest.Status.ETag = eTag
 		pullrequest.Status.SourceBranches.Branches = setDifferences
 		patch.UnstructuredContent()["status"] = pullrequest.Status
 		r.Status().Patch(ctx, patch, client.Apply, patchOptions)
