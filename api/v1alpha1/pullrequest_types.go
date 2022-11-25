@@ -79,7 +79,7 @@ func init() {
 	SchemeBuilder.Register(&PullRequest{}, &PullRequestList{})
 }
 
-//GetLastCondition retruns the last condition based on the condition timestamp. if no condition is present it return false.
+// GetLastCondition retruns the last condition based on the condition timestamp. if no condition is present it return false.
 func (m *PullRequest) GetLastCondition() metav1.Condition {
 	if len(m.Status.Conditions) == 0 {
 		return metav1.Condition{}
