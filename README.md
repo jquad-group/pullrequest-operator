@@ -92,7 +92,7 @@ type: Opaque
 
 # Status Example
 
-The following status is created after a successfull pull for the pull requests:
+The following status is created after a successful pull for the pull requests:
 
 ```
 Status:
