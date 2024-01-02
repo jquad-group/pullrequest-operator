@@ -1,7 +1,7 @@
 apiVersion: pipeline.jquad.rocks/v1alpha1
 kind: PipelineTrigger
 metadata:
-  name: pipelinetrigger-for-pullrequest
+  name: pipelinetrigger-for-release
   namespace: pullrequest-operator-system-build
 spec:
   source: 
@@ -12,7 +12,7 @@ spec:
     apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
     metadata:
-      generateName: pullrequest-operator-pr-
+      generateName: pullrequest-operator-release-
       namespace: pullrequest-operator-operator-system-build
       labels:
         app: pullrequest-operator
