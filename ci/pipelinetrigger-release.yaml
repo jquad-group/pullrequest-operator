@@ -13,7 +13,7 @@ spec:
     kind: PipelineRun
     metadata:
       generateName: pullrequest-operator-release-
-      namespace: pullrequest-operator-operator-system-build
+      namespace: pullrequest-operator-system-build
       labels:
         app: pullrequest-operator
     spec:        
