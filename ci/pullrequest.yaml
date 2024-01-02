@@ -1,0 +1,17 @@
+apiVersion: pipeline.jquad.rocks/v1alpha1
+kind: PullRequest
+metadata:
+  name: pullrequest-operator
+  namespace: pullrequest-operator-system-build
+spec:
+  gitProvider:
+    provider: Github
+    secretRef: git-clone
+    insecureSkipVerify: false
+    github:
+      url: https://github.com/jquad-group/pullrequest-operator.git
+      owner: jquad-group
+      repository: pullrequest-operator
+  targetBranch: 
+    name: refs/heads/main
+  interval: 1m
