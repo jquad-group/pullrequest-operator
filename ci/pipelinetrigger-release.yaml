@@ -9,7 +9,7 @@ spec:
     kind: GitRepository
     name: pullrequest-operator
   pipelineRun:
-    apiVersion: tekton.dev/v1beta1
+    apiVersion: tekton.dev/v1
     kind: PipelineRun
     metadata:
       generateName: pullrequest-operator-release-
@@ -18,13 +18,14 @@ spec:
         app: pullrequest-operator
     spec:        
       pipelineRef:
-        name: release-pipeline-go
-      serviceAccountName: build-robot
-      podTemplate:
-        securityContext:
-          fsGroup: 0
-          runAsGroup: 0
-          runAsUser: 0
+        name: release-pipeline-go      
+      taskRunTemplate:
+        podTemplate:
+          securityContext:
+            fsGroup: 0
+            runAsGroup: 0
+            runAsUser: 0
+        serviceAccountName: build-robot
       workspaces:
       - name: workspace
         volumeClaimTemplate:
